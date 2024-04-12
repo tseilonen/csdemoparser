@@ -269,6 +269,7 @@ type Scoreboard struct {
 	WinnerTeam      string           `json:"winner_team"`
 	KDTypeBits      map[int]string   `json:"kd_type_bits"`
 	MaxRounds       int              `json:"max_rounds"`
+	MapName         string           `json:"map_name"`
 	knifeRoundMatch bool
 	teamsSwapped    bool
 }
@@ -291,6 +292,7 @@ type PlayerScore struct {
 	KillsByType        map[uint32]int `json:"kills_by_type"`
 	DeathsByWeapon     map[string]int `json:"deaths_by_weapon"`
 	DeathsByType       map[uint32]int `json:"deaths_by_type"`
+	ChickenKills       int            `json:"chicken_kills"`
 	playerRef          *common.Player
 
 	/*

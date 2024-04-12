@@ -61,7 +61,7 @@ func main() {
 			// Check if the demo hasn't been parsed already
 
 			if _, exists := parsedMap[filename]; !exists {
-				if !strings.Contains(filename, "2024-01") && !strings.Contains(filename, "_-1") {
+				if true { //!strings.Contains(filename, "2024-01") && !strings.Contains(filename, "_-1") {
 					err := parseSingleDemo(demosDir, demo.Name(), parsedDir)
 
 					if err != nil {
@@ -402,6 +402,23 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 		}
 	})
 
+	p.RegisterEventHandler(func(e events.OtherDeath) {
+		scoreboardMutex.Lock() // Lock the mutex before accessing scoreboard
+		defer scoreboardMutex.Unlock()
+
+		// Ensure scoreboard is initialized
+		if scoreboard.PlayerScores == nil {
+			return
+		}
+
+		killer := scoreboard.getPlayerScore(e.Killer)
+
+		if e.OtherType == "chicken" {
+			killer.ChickenKills += 1
+		}
+
+	})
+
 	p.RegisterEventHandler(func(e events.GrenadeEventIf) {
 		scoreboardMutex.Lock() // Lock the mutex before accessing scoreboard
 		defer scoreboardMutex.Unlock()
@@ -641,6 +658,8 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 			return err
 		}
 	}
+
+	scoreboard.MapName = p.Header().MapName
 
 	scoreboard.updatePostMatchStats()
 
