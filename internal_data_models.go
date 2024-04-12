@@ -133,6 +133,11 @@ func (sb *Scoreboard) updatePostMatchStats() {
 		return sb.PlayerScores[i].Kills > sb.PlayerScores[j].Kills
 	})
 
+	// Calculate ADR for each player
+	for i := range sb.PlayerScores {
+		sb.PlayerScores[i].calculateADR(sb.RoundsPlayed)
+	}
+
 	// Calculate winner
 	// Determine the team with the most rounds
 	maxRounds := 0

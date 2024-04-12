@@ -633,23 +633,6 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 		}
 	}
 
-	// // Set teammate SteamIDs for all the players
-	// for i, ps := range scoreboard.PlayerScores {
-	// 	scoreboard.PlayerScores[i].TeammateSteamIDs = scoreboard.TeamMemebers[ps.TeamId]
-	// }
-
-	// Calculate ADR for each player
-	for i := range scoreboard.PlayerScores {
-		scoreboard.PlayerScores[i].calculateADR(scoreboard.RoundsPlayed)
-	}
-
-	// // Save the final scoreboard to CSV
-	// err = saveScoreboardToCSV(scoreboard.PlayerScores, filename+"_scoreboard.csv", scoreboard.RoundsPlayed, parsedDir)
-	// if err != nil {
-	// 	slog.Error(fmt.Sprintf("Error saving scoreboard to CSV from demo: %v", filename))
-	// 	return err
-	// }
-
 	scoreboard.updatePostMatchStats()
 
 	err = scoreboard.saveJson(filename+"_scoreboard.json", parsedDir)
