@@ -18,5 +18,5 @@ for i in range(len(data['player_scores'])):
             if bool(int(ktype) & 2**int(k)):
                 killtype = killtype + ' ' + data['kd_type_bits'][k]
             
-        print(f"{killtype} {data['player_scores'][i]['kills_by_type'][ktype]}", end='\n')
+        print(f"{killtype} {data['player_scores'][i]['kills_by_type'][ktype]}")
     print()
