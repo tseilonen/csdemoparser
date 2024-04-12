@@ -304,9 +304,19 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 			4	no scope
 			5	blind
 			6	flash
+			7	suicide
 		*/
 
-		killtype := uint32(boolToInt(getPlayerTeam(e.Killer) == getPlayerTeam(e.Victim)) + boolToInt(e.ThroughSmoke)*2 + boolToInt(e.PenetratedObjects > 0)*4 + boolToInt(e.IsHeadshot)*8 + boolToInt(e.NoScope)*16 + boolToInt(e.AttackerBlind)*32 + boolToInt(e.AssistedFlash)*64)
+		killtype := uint32(
+			boolToInt(getPlayerTeam(e.Killer) == getPlayerTeam(e.Victim) && killer.SteamID != victim.SteamID)*1 +
+				boolToInt(e.ThroughSmoke)*2 +
+				boolToInt(e.PenetratedObjects > 0)*4 +
+				boolToInt(e.IsHeadshot)*8 +
+				boolToInt(e.NoScope)*16 +
+				boolToInt(e.AttackerBlind)*32 +
+				boolToInt(e.AssistedFlash)*64 +
+				boolToInt(killer.SteamID == victim.SteamID)*128)
+
 		killer.KillsByType[killtype] += 1
 		victim.DeathsByType[killtype] += 1
 

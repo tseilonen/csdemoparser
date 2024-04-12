@@ -107,7 +107,7 @@ func initializeScoreboard(gs dem.GameState) Scoreboard {
 		sb.PlayerScores, _ = sb.getAddPlayerScore(player)
 	}
 
-	sb.KDTypeBits = map[int]string{0: "teamkill", 1: "through smoke", 2: "wallbang", 3: "headshot", 4: "no scope", 5: "attacker blind", 6: "victim flashed"}
+	sb.KDTypeBits = map[int]string{0: "teamkill", 1: "through smoke", 2: "wallbang", 3: "headshot", 4: "no scope", 5: "attacker blind", 6: "victim flashed", 7: "suicide"}
 
 	return sb
 }
@@ -278,6 +278,7 @@ type PlayerScore struct {
 		4	no scope
 		5	blind
 		6	flash
+		7	suicide
 	*/
 
 	// Team
