@@ -1,6 +1,4 @@
 demoparser
-data/*
+data/**/*.*
 
-!data/.gitkeep
-!data/demos/.gitkeep
-!data/parsed/.gitkeep
+!data/**/.gitkeep
