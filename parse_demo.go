@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync" // Import sync package for mutex
 	"time"
@@ -60,7 +61,7 @@ func main() {
 			// Check if the demo hasn't been parsed already
 
 			if _, exists := parsedMap[filename]; !exists {
-				if true { //!strings.Contains(filename, "2024-01") && !strings.Contains(filename, "_-1") {
+				if !strings.Contains(filename, "2024-01") && !strings.Contains(filename, "_-1") {
 					err := parseSingleDemo(demosDir, demo.Name(), parsedDir)
 
 					if err != nil {
@@ -120,6 +121,15 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 		// Initialize the scoreboard at the beginning of the match
 		scoreboard = initializeScoreboard(p.GameState())
 
+		// string to int
+		i, err := strconv.Atoi(p.GameState().Rules().ConVars()["mp_maxrounds"])
+		if err != nil {
+			slog.Error("mp_maxrounds is not a number!")
+			panic(err)
+		}
+
+		scoreboard.MaxRounds = i
+
 		if kniferound != nil && updateKnife {
 			for _, pk := range kniferound {
 				for i, ps := range scoreboard.PlayerScores {
@@ -178,10 +188,9 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 			ps.Deaths = player.Deaths()
 			ps.Mvps = player.MVPs()
 			ps.MoneySpentTotal = player.MoneySpentTotal()
-			ps.TeamId = player.TeamState.ID()
 			ps.TeamRounds = player.TeamState.Score()
 
-			slog.Debug(fmt.Sprintf("Player %v	Team id %v", player.Name, player.TeamState.ID()))
+			slog.Debug(fmt.Sprintf("Player %v	Team id %v", player.Name, ps.playerRef.TeamState.ID()))
 
 			switch roundStats.KillsOnRound[ps.SteamID] {
 			case 2:

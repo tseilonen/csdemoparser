@@ -179,6 +179,21 @@ func (sb *Scoreboard) getAddPlayerScore(p *common.Player) ([]PlayerScore, *Playe
 		}
 	}
 
+	// If sides have changed and a player is added, we have to change team ids, because TeamState.ID() isn't a constant even though it is supposed to be
+	if sb.MaxRounds/2 < sb.RoundsPlayed && !sb.teamsSwapped {
+		sb.TeamMemebers = make(map[int][]uint64)
+
+		for i, ps := range sb.PlayerScores {
+			newTeam := ps.playerRef.TeamState.ID()
+			sb.PlayerScores[i].TeamId = newTeam
+			sb.TeamMemebers[newTeam] = append(sb.TeamMemebers[newTeam], ps.SteamID)
+		}
+
+		sb.teamsSwapped = true
+	}
+
+	sb.TeamMemebers[p.TeamState.ID()] = append(sb.TeamMemebers[p.TeamState.ID()], p.SteamID64)
+
 	ClanName := ""
 
 	if p.TeamState != nil {
@@ -186,17 +201,17 @@ func (sb *Scoreboard) getAddPlayerScore(p *common.Player) ([]PlayerScore, *Playe
 	}
 
 	sb.PlayerScores = append(sb.PlayerScores, PlayerScore{
-		SteamID:  p.SteamID64,
-		Nickname: p.Name,
-		Team:     ClanName,
+		SteamID:   p.SteamID64,
+		Nickname:  p.Name,
+		Team:      ClanName,
+		TeamId:    p.TeamState.ID(),
+		playerRef: p,
 	})
 
 	sb.PlayerScores[len(sb.PlayerScores)-1].KillsByWeapon = make(map[string]int)
 	sb.PlayerScores[len(sb.PlayerScores)-1].DeathsByWeapon = make(map[string]int)
 	sb.PlayerScores[len(sb.PlayerScores)-1].KillsByType = make(map[uint32]int)
 	sb.PlayerScores[len(sb.PlayerScores)-1].DeathsByType = make(map[uint32]int)
-
-	sb.TeamMemebers[p.TeamState.ID()] = append(sb.TeamMemebers[p.TeamState.ID()], p.SteamID64)
 
 	if len(sb.TeamMemebers[p.TeamState.ID()]) > 5 {
 		slog.Warn(fmt.Sprintf("Team %v (%v) player count %v. Added %v", p.TeamState.ID(), ClanName, len(sb.TeamMemebers[p.TeamState.ID()]), p.Name))
@@ -253,7 +268,9 @@ type Scoreboard struct {
 	WinnerTeamID    int              `json:"winner_team_id"`
 	WinnerTeam      string           `json:"winner_team"`
 	KDTypeBits      map[int]string   `json:"kd_type_bits"`
+	MaxRounds       int              `json:"max_rounds"`
 	knifeRoundMatch bool
+	teamsSwapped    bool
 }
 
 type PlayerScore struct {
@@ -274,6 +291,7 @@ type PlayerScore struct {
 	KillsByType        map[uint32]int `json:"kills_by_type"`
 	DeathsByWeapon     map[string]int `json:"deaths_by_weapon"`
 	DeathsByType       map[uint32]int `json:"deaths_by_type"`
+	playerRef          *common.Player
 
 	/*
 		0	teamkill
