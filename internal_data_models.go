@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 	"sort"
 
 	dem "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs"
@@ -125,6 +126,45 @@ func (sb *Scoreboard) addResidualDamage(rhs RoundHealths) {
 }
 
 func (sb *Scoreboard) updatePostMatchStats() {
+	// Calculate winner
+	// Determine the team with the most rounds
+	// Determine the number of zeroround players
+	maxRounds := 0
+	var winnerTeamID int
+	var zeroRoundPlayers []int
+	for i, player := range sb.PlayerScores {
+		if player.TeamRounds > maxRounds {
+			maxRounds = player.TeamRounds
+			winnerTeamID = player.TeamId
+		}
+
+		if player.PlayedRounds == 0 {
+			zeroRoundPlayers = append(zeroRoundPlayers, i)
+		}
+	}
+
+	sb.WinnerTeamID = winnerTeamID
+	sb.WinnerTeam = sb.TeamNames[winnerTeamID]
+
+	// Remove zeroroundplayers
+	extra := 0
+	lastValid := 0
+	for i, rm := range zeroRoundPlayers {
+		valueToCheck := len(sb.PlayerScores) - (i + 1 + extra)
+		for slices.Contains(zeroRoundPlayers, valueToCheck) {
+			extra += 1
+			valueToCheck = len(sb.PlayerScores) - (i + 1 + extra)
+		}
+
+		lastValid = max(valueToCheck, 0)
+		sb.PlayerScores[rm] = sb.PlayerScores[lastValid]
+	}
+
+	if len(zeroRoundPlayers) > 0 {
+		slog.Warn(fmt.Sprintf("Removing %v zeroround players", len(zeroRoundPlayers)))
+		sb.PlayerScores = sb.PlayerScores[:len(sb.PlayerScores)-len(zeroRoundPlayers)]
+	}
+
 	// Write scoreboard in order of teams and kills
 	sort.Slice(sb.PlayerScores, func(i, j int) bool {
 		if sb.PlayerScores[i].TeamId != sb.PlayerScores[j].TeamId {
@@ -138,19 +178,6 @@ func (sb *Scoreboard) updatePostMatchStats() {
 		sb.PlayerScores[i].calculateADR(sb.RoundsPlayed)
 	}
 
-	// Calculate winner
-	// Determine the team with the most rounds
-	maxRounds := 0
-	var winnerTeamID int
-	for _, player := range sb.PlayerScores {
-		if player.TeamRounds > maxRounds {
-			maxRounds = player.TeamRounds
-			winnerTeamID = player.TeamId
-		}
-	}
-
-	sb.WinnerTeamID = winnerTeamID
-	sb.WinnerTeam = sb.TeamNames[winnerTeamID]
 }
 
 func (sb *Scoreboard) getPlayerScore(p *common.Player) *PlayerScore {
@@ -214,7 +241,7 @@ func (sb *Scoreboard) getAddPlayerScore(p *common.Player) ([]PlayerScore, *Playe
 	sb.PlayerScores[len(sb.PlayerScores)-1].DeathsByType = make(map[uint32]int)
 
 	if len(sb.TeamMemebers[p.TeamState.ID()]) > 5 {
-		slog.Warn(fmt.Sprintf("Team %v (%v) player count %v. Added %v", p.TeamState.ID(), ClanName, len(sb.TeamMemebers[p.TeamState.ID()]), p.Name))
+		slog.Warn(fmt.Sprintf("Team %v (%v) player count %v. Added %v. Teammembers %v", p.TeamState.ID(), ClanName, len(sb.TeamMemebers[p.TeamState.ID()]), p.Name, sb.TeamMemebers[p.TeamState.ID()]))
 	}
 
 	return sb.PlayerScores, &sb.PlayerScores[len(sb.PlayerScores)-1]
@@ -293,6 +320,7 @@ type PlayerScore struct {
 	DeathsByWeapon     map[string]int `json:"deaths_by_weapon"`
 	DeathsByType       map[uint32]int `json:"deaths_by_type"`
 	ChickenKills       int            `json:"chicken_kills"`
+	PlayedRounds       int            `json:"played_rounds"`
 	playerRef          *common.Player
 
 	/*
@@ -402,6 +430,9 @@ type PlayerScore struct {
 	KnifeRoundAssists int `json:"kniferound_assists"`
 	KnifeRoundDeaths  int `json:"kniferound_deaths"`
 	/////////////////////////////////////////////////
+
+	OnDeathDroppedUtilityValue       int
+	OnDeathDroppedBoughtUtilityValue int
 
 	// Determining if something was bough wasn't trivial knowledge to dig out, so these are still waiting
 	// FlashesBought  int // itemppickup

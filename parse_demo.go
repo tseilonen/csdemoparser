@@ -19,9 +19,9 @@ import (
 func main() {
 	defer TimeTrack(time.Now())
 
-	// slog.SetLogLoggerLevel(slog.LevelDebug)
-	slog.SetLogLoggerLevel(slog.LevelInfo)
 	// slog.SetLogLoggerLevel(slog.LevelError)
+	slog.SetLogLoggerLevel(slog.LevelInfo)
+	// slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	demosDir := "data/demos/"
 	parsedDir := "data/parsed/"
@@ -189,6 +189,7 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 			ps.Mvps = player.MVPs()
 			ps.MoneySpentTotal = player.MoneySpentTotal()
 			ps.TeamRounds = player.TeamState.Score()
+			ps.PlayedRounds += 1
 
 			slog.Debug(fmt.Sprintf("Player %v	Team id %v", player.Name, ps.playerRef.TeamState.ID()))
 

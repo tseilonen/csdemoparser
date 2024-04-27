@@ -19,4 +19,6 @@ for i in range(len(data['player_scores'])):
                 killtype = killtype + ' ' + data['kd_type_bits'][k]
             
         print(f"{killtype} {data['player_scores'][i]['kills_by_type'][ktype]}")
+
+    print(f"Kniferound stats:\n \tKills {data['player_scores'][i]['kniferound_kills']}\n \tAssists {data['player_scores'][i]['kniferound_assists']}\n \tDeaths {data['player_scores'][i]['kniferound_deaths']}")
     print()
