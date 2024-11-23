@@ -66,6 +66,7 @@ func initializeRoundStats(sb Scoreboard, ctTS *common.TeamState, tTS *common.Tea
 	rs.KillsOnRound = make(map[uint64]int)
 	rs.Kast = make(map[uint64]bool)
 	rs.TimeOfDeath = make(map[uint64]time.Duration)
+	rs.Killers = make(map[uint64]uint64)
 
 	for _, p := range ctTS.Members() {
 		if p.IsAlive() {
@@ -282,16 +283,10 @@ type RoundStats struct {
 	ClutchingPlayer *common.Player
 	Clutch1V1       *common.Player
 	EnemiesToClutch int
-	RoundEnded      bool       // Events after round end don't count towards clutches so, we need to track the round status
-	KillTimes       []KillTime // Kill times need to be tracked for trade calculation. Map key is killer id
+	RoundEnded      bool              // Events after round end don't count towards clutches so, we need to track the round status
+	Killers         map[uint64]uint64 // Killers need to be tracked to check for trades
 	Kast            map[uint64]bool
 	TimeOfDeath     map[uint64]time.Duration
-}
-
-type KillTime struct {
-	Timestamp time.Duration
-	VictimID  uint64
-	KillerID  uint64
 }
 
 type RoundHealths []RoundHealth

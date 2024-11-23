@@ -227,9 +227,10 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 				roundStats.Kast[player.SteamID64] = true
 			} else {
 				timeOfDeath := roundStats.TimeOfDeath[player.SteamID64]
+				killerID := roundStats.Killers[player.SteamID64]
 
-				for _, v := range roundStats.KillTimes {
-					if v.KillerID == player.SteamID64 && timeOfDeath-v.Timestamp < 2*10^9 {
+				for id, v := range roundStats.TimeOfDeath {
+					if id == killerID && v-timeOfDeath < 2*10^9 {
 						roundStats.Kast[player.SteamID64] = true
 					}
 				}
@@ -326,7 +327,7 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 		roundStats.TimeOfDeath[victim.SteamID] = timestamp
 
 		if killer.SteamID != victim.SteamID {
-			roundStats.KillTimes = append(roundStats.KillTimes, KillTime{KillerID: killer.SteamID, VictimID: victim.SteamID, Timestamp: timestamp})
+			roundStats.Killers[victim.SteamID] = killer.SteamID
 			roundStats.Kast[killer.SteamID] = true
 			roundStats.Kast[assister.SteamID] = true
 		}
