@@ -7,6 +7,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"time"
 
 	dem "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs"
 	common "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/common"
@@ -19,6 +20,15 @@ func (p *PlayerScore) calculateADR(roundsPlayed int) {
 	}
 
 	p.ADR = float64(p.DamageDone) / float64(roundsPlayed)
+}
+
+func (p *PlayerScore) calculateKAST(roundsPlayed int) {
+	// Calculate ADR (Average Damage per Round)
+	if roundsPlayed == 0 {
+		p.Kast = 0.0
+	}
+
+	p.Kast = p.Kast / float64(roundsPlayed) * 100
 }
 
 func (rhs RoundHealths) updateDamager(p *common.Player, d *common.Player) {
@@ -54,6 +64,8 @@ func initializeRoundStats(sb Scoreboard, ctTS *common.TeamState, tTS *common.Tea
 
 	rs.RoundHealths = initializeRoundHealths(sb.PlayerScores)
 	rs.KillsOnRound = make(map[uint64]int)
+	rs.Kast = make(map[uint64]bool)
+	rs.TimeOfDeath = make(map[uint64]time.Duration)
 
 	for _, p := range ctTS.Members() {
 		if p.IsAlive() {
@@ -173,9 +185,10 @@ func (sb *Scoreboard) updatePostMatchStats() {
 		return sb.PlayerScores[i].Kills > sb.PlayerScores[j].Kills
 	})
 
-	// Calculate ADR for each player
+	// Calculate ADR and KAST for each player
 	for i := range sb.PlayerScores {
 		sb.PlayerScores[i].calculateADR(sb.RoundsPlayed)
+		sb.PlayerScores[i].calculateKAST(sb.RoundsPlayed)
 	}
 
 }
@@ -269,7 +282,16 @@ type RoundStats struct {
 	ClutchingPlayer *common.Player
 	Clutch1V1       *common.Player
 	EnemiesToClutch int
-	RoundEnded      bool // Events after round end don't count towards clutches so, we need to track the round status
+	RoundEnded      bool       // Events after round end don't count towards clutches so, we need to track the round status
+	KillTimes       []KillTime // Kill times need to be tracked for trade calculation. Map key is killer id
+	Kast            map[uint64]bool
+	TimeOfDeath     map[uint64]time.Duration
+}
+
+type KillTime struct {
+	Timestamp time.Duration
+	VictimID  uint64
+	KillerID  uint64
 }
 
 type RoundHealths []RoundHealth
@@ -308,6 +330,7 @@ type PlayerScore struct {
 	Kills              int            `json:"kills"`
 	Assists            int            `json:"assists"`
 	Deaths             int            `json:"deaths"`
+	Kast               float64        `json:"kast"`
 	DamageDone         int            `json:"damage_done"`
 	DamageReceived     int            `json:"damage_received"`
 	TeamDamageDone     int            `json:"team_damage_done"`

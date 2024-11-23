@@ -223,6 +223,20 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 				ps.ClutchV1Wins += 1
 			}
 
+			if player.IsAlive() {
+				roundStats.Kast[player.SteamID64] = true
+			} else {
+				timeOfDeath := roundStats.TimeOfDeath[player.SteamID64]
+
+				for _, v := range roundStats.KillTimes {
+					if v.KillerID == player.SteamID64 && timeOfDeath-v.Timestamp < 2*10^9 {
+						roundStats.Kast[player.SteamID64] = true
+					}
+				}
+			}
+
+			ps.Kast += float64(boolToInt(roundStats.Kast[player.SteamID64]))
+
 		}
 
 		scoreboard.RoundsPlayed = p.GameState().TotalRoundsPlayed()
@@ -249,6 +263,8 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 
 		killer := scoreboard.getPlayerScore(e.Killer)
 		victim := scoreboard.getPlayerScore(e.Victim)
+		assister := scoreboard.getPlayerScore(e.Assister)
+
 		var victimTeamAlive int
 
 		// Clutchi laskentaa
@@ -264,16 +280,16 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 
 		if victimTeamAlive == 1 && !roundStats.RoundEnded {
 			if roundStats.ClutchingPlayer == nil {
-				for _, p := range e.Victim.TeamState.Opponent.Members() {
-					if p.IsAlive() {
+				for _, playa := range e.Victim.TeamState.Opponent.Members() {
+					if playa.IsAlive() {
 						roundStats.EnemiesToClutch += 1
 					}
 				}
 			}
 
 			members := e.Victim.TeamState.Members()
-			for i, p := range members {
-				if p.IsAlive() && p.SteamID64 != e.Victim.SteamID64 {
+			for i, playa := range members {
+				if playa.IsAlive() && playa.SteamID64 != e.Victim.SteamID64 {
 					ps := scoreboard.getPlayerScore(members[i])
 
 					if roundStats.ClutchingPlayer != nil {
@@ -304,6 +320,15 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 		if e.Weapon != nil {
 			killer.KillsByWeapon[e.Weapon.String()] += 1
 			victim.DeathsByWeapon[e.Weapon.String()] += 1
+		}
+
+		timestamp := p.CurrentTime()
+		roundStats.TimeOfDeath[victim.SteamID] = timestamp
+
+		if killer.SteamID != victim.SteamID {
+			roundStats.KillTimes = append(roundStats.KillTimes, KillTime{KillerID: killer.SteamID, VictimID: victim.SteamID, Timestamp: timestamp})
+			roundStats.Kast[killer.SteamID] = true
+			roundStats.Kast[assister.SteamID] = true
 		}
 
 		/*
@@ -367,7 +392,6 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 					killer.FlashKills += 1
 					victim.FlashDeaths += 1
 
-					assister := scoreboard.getPlayerScore(e.Assister)
 					assister.FlashAssists += 1
 				}
 			} else {
@@ -396,7 +420,6 @@ func parseSingleDemo(demosDir string, filename string, parsedDir string) (err er
 					killer.TeamFlashKills += 1
 					victim.TeamFlashDeaths += 1
 
-					assister := scoreboard.getPlayerScore(e.Assister)
 					assister.TeamFlashAssists += 1
 				}
 			}
